@@ -1,17 +1,64 @@
-# kubernetes-guacamole-cloudflared
-- Kubernetes Guacamole(RDP Client) with Cloudflare Zero Trust(Terraform)
+# Cloudflare Zero trust + Kubernetes Guacamole + Traefik
+- for Private access to guacamole with VPN
 
-# Target Kuberentes system
-- k3s.io
+# System 
+- Internet -> Cloudflare Zero trust VPN -> Traefik -> Guacamole Pod
 
-# Guacamole Password
-- `guacadmin` / `guacadmin`
+# Works
+- Guacamole System
 
-# Traefik Ingress
-- working
+# Not works
+- guacamole Administration permission
 
-# Reference
-- https://blog.cloudflare.com/ko-kr/kubectl-with-zero-trust-ko-kr/
+# Not checked
+- RDP communication
 
-# tested on
-- Oracle Cloud ARM64
+# Guacamole credentials
+- `guacadmin` `admin`
+
+# Tunnel create
+```
+cloudflared tunnel create example-tunnel
+```
+# Create Secret
+```
+kubectl create secret generic tunnel-credentials --from-file=/Users/jayney/.cloudflared/<tunnelid>.json
+```
+# Domain connect
+```
+cloudflared tunnel route dns example-tunnel guacamole.rainclab.net
+```
+# DNS
+- CNAME guacamole.example.com -> Cloudflare Tunnel ID.cf
+
+# Apply Cloudflared
+```
+cd cloudflare
+kubectl apply -k . 
+```
+
+# Apply guacd
+```
+cd guacd
+kubectl apply -k . 
+```
+
+# Change traefik domain
+```
+cd guacamoole
+vim ingress.yaml
+--- 
+- host: guacamole.example.com <- Edit here ->
+```
+
+# Apply guacamole
+```
+cd guacamole
+kubectl apply -k . 
+```
+
+# Apply traefik
+```
+cd traefik
+kubectl 
+```

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    tunnel: api-zt
+  name: tunnel-api-zt
+  namespace: cloudflare
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tunnel: api-zt
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        tunnel: api-zt
+    spec:
+      containers:
+        - args:
+            -  tunnel
+            - --config
+            - /opt/zt/config/config.yaml
+            - run
+          env:
+            - name: GOMAXPROCS
+              value: "2"
+            - name: TZ
+              value: UTC
+          image: cloudflare/cloudflared:latest
+          livenessProbe:
+            failureThreshold: 1
+            httpGet:
+              path: /ready
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          name: tunnel
+          ports:
+            - containerPort: 8081
+              name: http-metrics
+          resources:
+            limits:
+              cpu: 100m
+              memory: 600Mi
+          volumeMounts:
+            - mountPath: /opt/zt/config
+              name: config
+              readOnly: true
+            - mountPath: /opt/zt/creds
+              name: creds
+              readOnly: true
+      volumes:
+        - secret:
+            secretName: tunnel-creds
+          name: creds
+        - configMap:
+            name: tunnel-zt
+          name: config

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guacamole
+  namespace: guacamole
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      run: guacamole
+  template:
+    metadata:
+      labels:
+        run: guacamole
+    spec:
+      containers:
+      - name: guacamole
+        image: maxwaldorf/guacamole:beta
+        env:
+          - name: GUACD_HOSTNAME
+            value: "guacd-svc.guacd"
+          - name: GUACD_PORT
+            value: "4822"
+          - name: GUACAMOLE_HOME
+            value: "/etc/guacamole/"  
+        ports:
+        - name: http
+          containerPort: 8080
+        # volumeMounts:
+        # - name: guacamole-conf
+        #   mountPath: /etc/guacamole/          
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          failureThreshold: 40
+          periodSeconds: 6
+      # volumes:
+      #   - name: guacamole-conf 
+      #     configMap:
+      #       name: guacamole-conf  
